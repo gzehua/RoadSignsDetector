@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final String yoloV5ModelFileName = "models/model_640x480_s_10_1000_2022-11-14_11-42-13-int8.tflite";
+    private final String yoloV5ModelFileName = "models/model_640x480_s_10_1000_2023-07-27_07-39-55-int8.tflite";
     private final String classificationModelFileName = "models/model_53_0.99831.hdf5_01_0.99893.hdf5_quantized.tflite";
 
     static {

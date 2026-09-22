@@ -52,7 +52,8 @@ public class SignClassifier {
 
     private GpuDelegate gpuDelegate = null;
 
-    final private int sourceByteBufferWidth = 640;
+    final private int sourceByteBufferWidthInPixels = 640;
+    final private int sourceByteBufferHeightInPixels = 480;
 
     private ByteBuffer imgData;
     private ByteBuffer outData;
@@ -133,7 +134,6 @@ public class SignClassifier {
         tfliteModel = null;
     }
 
-
     synchronized public int getClassId(Recognition rec, Bitmap bitmap, ByteBuffer byteBuffer) throws Exception {
         int width = rec.right - rec.left;
         int height = rec.bottom - rec.top;
@@ -142,8 +142,14 @@ public class SignClassifier {
             // Coords rescale
             int newX = (rec.left * 9 + 2) / 4;
             int newY = (rec.top * 9 + 2) / 4;
-            int newX2 = (rec.right * 9 + 2) / 4;
-            int newY2 = (rec.bottom * 9 + 2) / 4;
+            int newX2 = ((rec.right - 1) * 9 + 2) / 4;
+            int newY2 = ((rec.bottom - 1) * 9 + 2) / 4;
+
+            newX = Math.max(newX - Config.ORIG_IMG_FRAG_BORDER, 0);
+            newY = Math.max(newY - Config.ORIG_IMG_FRAG_BORDER, 0);
+            newX2 = Math.min(newX2 + Config.ORIG_IMG_FRAG_BORDER + 1, bitmap.getWidth());
+            newY2 = Math.min(newY2 + Config.ORIG_IMG_FRAG_BORDER + 1, bitmap.getHeight());
+
             int newWidth = newX2 - newX;
             int newHeight = newY2 - newY;
 
@@ -154,21 +160,30 @@ public class SignClassifier {
 
             Mat resizedFragment = new Mat(inputHeight, inputWidth, CvType.CV_8UC3);
             org.opencv.core.Size sz = new org.opencv.core.Size( inputWidth, inputHeight);
-            Imgproc.resize(frag, resizedFragment, sz, 0, 0, Imgproc.INTER_CUBIC);
+            Imgproc.resize(frag, resizedFragment, sz, 0, 0, (newWidth <= inputWidth) || (newHeight <= inputHeight) ? Imgproc.INTER_CUBIC : Imgproc.INTER_AREA);
 
             JniNativeOpsLib.matToByteBuffer(resizedFragment, imgData);
         } else {
-            byte[] buf = new byte[width * height * 3];
-            JniNativeOpsLib.cropByteBufferToByteArray(byteBuffer, sourceByteBufferWidth, rec.left, rec.top, width, height, buf);
-            Mat frag = new Mat(height, width, CvType.CV_8UC3);
+            // Include border
+            int newX = Math.max(rec.left - Config.RESIZED_IMG_FRAG_BORDER, 0);
+            int newY = Math.max(rec.top - Config.RESIZED_IMG_FRAG_BORDER, 0);
+            int newX2 = Math.min(rec.right + Config.RESIZED_IMG_FRAG_BORDER, sourceByteBufferWidthInPixels);   // Not included
+            int newY2 = Math.min(rec.bottom + Config.RESIZED_IMG_FRAG_BORDER, sourceByteBufferHeightInPixels);  // Not included
+
+            int newWidth = newX2 - newX;
+            int newHeight = newY2 - newY;
+
+            byte[] buf = new byte[newWidth * newHeight * 3];
+            JniNativeOpsLib.cropByteBufferToByteArray(byteBuffer, sourceByteBufferWidthInPixels, newX, newY, newWidth, newHeight, buf);
+            Mat frag = new Mat(newHeight, newWidth, CvType.CV_8UC3);
             frag.put(0, 0, buf);
 
-            if (width == inputWidth && height == inputHeight) {
+            if (newWidth == inputWidth && newHeight == inputHeight) {
                 JniNativeOpsLib.matToByteBuffer(frag, imgData);
             } else {
                 Mat resizedFragment = new Mat(inputHeight, inputWidth, CvType.CV_8UC3);
                 org.opencv.core.Size sz = new org.opencv.core.Size(inputWidth, inputHeight);
-                Imgproc.resize(frag, resizedFragment, sz, 0, 0, (width <= inputWidth) || (height <= inputHeight) ? Imgproc.INTER_CUBIC : Imgproc.INTER_AREA);
+                Imgproc.resize(frag, resizedFragment, sz, 0, 0, (newWidth <= inputWidth) || (newHeight <= inputHeight) ? Imgproc.INTER_CUBIC : Imgproc.INTER_AREA);
 
                 JniNativeOpsLib.matToByteBuffer(resizedFragment, imgData);
             }

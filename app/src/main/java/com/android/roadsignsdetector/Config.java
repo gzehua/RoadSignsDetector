@@ -23,14 +23,16 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Config {
-    public static final int MIN_OBJECT_SIZE = 15;
-    public static final float DEACTIVATION_WINDOW_RATIO = 0.7f;
-    public static final int MIN_QUEUE_ELEMENTS = 4; // Minimum number of queue elements guaranteed to be taken into account
+    public static final int MIN_OBJECT_SIZE = 14;
+    public static final float DEACTIVATION_WINDOW_RATIO = 0.8f;
+    public static final int MIN_QUEUE_ELEMENTS = 9; // Minimum number of queue elements guaranteed to be taken into account
     public static final int MIN_QUEUE_MILLIS = 150;
-    public static final float MIN_ACTIVATION_RATIO = 0.7f;
-    public static final int MAX_OBJECT_SIZE_TAKE_ORIG = 20;
-    public static final float IOU_THRES = 0.5f;
-    public static final float CONF_THRES = 0.5f;
+    public static final float MIN_ACTIVATION_RATIO = 0.3f;
+    public static final int MAX_OBJECT_SIZE_TAKE_ORIG = 25;
+    public static final float IOU_THRES = 0.02f;
+    public static final float CONF_THRES = 0.8f;
+    public static final int ORIG_IMG_FRAG_BORDER = 10;
+    public static final int RESIZED_IMG_FRAG_BORDER = 6;
 
     public static final List<Pair<Integer, Integer>> NN_CLASSES_REMAP = Arrays.asList(
             new Pair<>(13,10)
